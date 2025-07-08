@@ -1,18 +1,15 @@
 import plotly.express as px
-from shiny.express import input, ui
-from shinywidgets import render_plotly
-import palmerpenguins
 import seaborn as sns
 import matplotlib.pyplot as plt
-from shiny import App, ui, render
-from shinywidgets import output_widget, render_plotly, render_widget
+from shiny import App, ui, render, reactive
+from shinywidgets import output_widget, render_plotly
 from palmerpenguins import load_penguins
 
-ui.page_auto(title="Mindy's Penguin Data", fillable=True)
-with ui.layout_columns():
 penguins_df = load_penguins()
-# Define UI
+
 app_ui = ui.page_fluid(
+    ui.page_auto(title="Mindy's Penguin Data", fillable=True),
+
     ui.layout_sidebar(
         ui.sidebar(
             ui.h2("Sidebar"),
@@ -63,72 +60,61 @@ app_ui = ui.page_fluid(
         ),
     )
 )
+
 def server(input, output, session):
     @render.data_frame
     def data_table():
-        return penguins_df[
-            penguins_df["species"].isin(input.selected_species_list())
-        ]
+        return penguins_df[penguins_df["species"].isin(input.selected_species_list())]
+
     @render.data_frame
     def data_grid():
-        return penguins_df[
-            penguins_df["species"].isin(input.selected_species_list())
-        ]
+        return penguins_df[penguins_df["species"].isin(input.selected_species_list())]
 
     @render_plotly
-    def plot1():
-        return px.histogram(px.data.tips(), y="tip")
     def plotly_histogram():
         col = input.selected_attribute()
-        bins = input.plotly_bin_count() 
-        filtered = penguins_df[
-            penguins_df["species"].isin(input.selected_species_list())
-        ]
-        fig = px.histogram(
-            filtered,
-            x=col,
-            nbins=bins,
-            color="species",
-            title=f"Plotly Histogram"
-        )
-        return fig
+        bins = input.plotly_bin_count()
+        filtered = penguins_df[penguins_df["species"].isin(input.selected_species_list())]
+        return px.histogram(filtered, x=col, nbins=bins, color="species", title="Plotly Histogram")
+
     @render.plot
     def seaborn_histogram():
         col = input.selected_attribute()
         bins = input.seaborn_bin_count()
-        filtered = penguins_df[
-            penguins_df["species"].isin(input.selected_species_list())
-        ]
+        filtered = penguins_df[penguins_df["species"].isin(input.selected_species_list())]
         fig, ax = plt.subplots()
-        sns.histplot(
-            data=filtered,
-            x=col,
-            bins=bins,
-            kde=True,
-            hue="species",
-            ax=ax
-        )
-        ax.set_title(f"Seaborn Histogram")
+        sns.histplot(data=filtered, x=col, bins=bins, kde=True, hue="species", ax=ax)
+        ax.set_title("Seaborn Histogram")
         return fig
 
     @render_plotly
-    def plot2():
-        return px.histogram(px.data.tips(), y="total_bill")
     def plotly_scatterplot():
-        filtered = penguins_df[
-            penguins_df["species"].isin(input.selected_species_list())
-        ]
-        fig = px.scatter(
+        filtered = penguins_df[penguins_df["species"].isin(input.selected_species_list())]
+        return px.scatter(
             filtered,
             x="flipper_length_mm",
             y="body_mass_g",
             color="species",
             hover_data=["island"],
-            title="Plotly Scatterplot:Species",
+            title="Plotly Scatterplot: Species",
             labels={
                 "flipper_length_mm": "Flipper Length (mm)",
                 "body_mass_g": "Body Mass (g)",
             },
         )
-        return fig
+
+# --------------------------------------------------------
+# Reactive calculations and effects
+# --------------------------------------------------------
+
+# Add a reactive calculation to filter the data
+# By decorating the function with @reactive, we can use the function to filter the data
+# The function will be called whenever an input functions used to generate that output changes.
+# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
+
+@reactive.calc
+def filtered_data():
+    return penguins_df
+    
 app = App(app_ui, server)
+
