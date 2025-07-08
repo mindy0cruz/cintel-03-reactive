@@ -64,34 +64,31 @@ app_ui = ui.page_fluid(
 def server(input, output, session):
     @render.data_frame
     def data_table():
-        return penguins_df[penguins_df["species"].isin(input.selected_species_list())]
+        return filtered_data()
 
     @render.data_frame
     def data_grid():
-        return penguins_df[penguins_df["species"].isin(input.selected_species_list())]
+        return filtered_data()
 
     @render_plotly
     def plotly_histogram():
         col = input.selected_attribute()
         bins = input.plotly_bin_count()
-        filtered = penguins_df[penguins_df["species"].isin(input.selected_species_list())]
-        return px.histogram(filtered, x=col, nbins=bins, color="species", title="Plotly Histogram")
+        return px.histogram(filtered_data(), x=col, nbins=bins, color="species", title="Plotly Histogram")
 
     @render.plot
     def seaborn_histogram():
         col = input.selected_attribute()
         bins = input.seaborn_bin_count()
-        filtered = penguins_df[penguins_df["species"].isin(input.selected_species_list())]
         fig, ax = plt.subplots()
-        sns.histplot(data=filtered, x=col, bins=bins, kde=True, hue="species", ax=ax)
+        sns.histplot(data=filtered_data(), x=col, bins=bins, kde=True, hue="species", ax=ax)
         ax.set_title("Seaborn Histogram")
         return fig
 
     @render_plotly
     def plotly_scatterplot():
-        filtered = penguins_df[penguins_df["species"].isin(input.selected_species_list())]
         return px.scatter(
-            filtered,
+            filtered_data(),
             x="flipper_length_mm",
             y="body_mass_g",
             color="species",
