@@ -8,7 +8,7 @@ from shiny import App, ui, render
 from shinywidgets import output_widget, render_plotly, render_widget
 from palmerpenguins import load_penguins
 
-ui.page_opts(title="Mindy's Penguin Data", fillable=True)
+ui.page_auto(title="Mindy's Penguin Data", fillable=True)
 with ui.layout_columns():
 penguins_df = load_penguins()
 # Define UI
