@@ -1,7 +1,7 @@
 import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
-from shiny import App, ui, render, reactive
+from shiny import App, ui, render, reactive, req
 from shinywidgets import output_widget, render_plotly
 from palmerpenguins import load_penguins
 
@@ -40,7 +40,7 @@ app_ui = ui.page_fluid(
             ui.hr(),
             ui.a(
                 "GitHub Link",
-                href="https://github.com/mindy0cruz/cintel-02-data",
+                href="https://github.com/nwn8/cintel-03-reactive/blob/main/app.py",
                 target="_blank",
             ),
             open="open"
@@ -61,7 +61,22 @@ app_ui = ui.page_fluid(
     )
 )
 
+# --------------------------------------------------------
+# Reactive calculations and effects
+# --------------------------------------------------------
+
+# Add a reactive calculation to filter the data
+# By decorating the function with @reactive, we can use the function to filter the data
+# The function will be called whenever an input functions used to generate that output changes.
+# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
+
 def server(input, output, session):
+    @reactive.calc
+    def filtered_data():
+        from shiny import req
+        req(input.selected_species_list())
+        return penguins_df[penguins_df["species"].isin(input.selected_species_list())]
+
     @render.data_frame
     def data_table():
         return filtered_data()
@@ -100,18 +115,5 @@ def server(input, output, session):
             },
         )
 
-# --------------------------------------------------------
-# Reactive calculations and effects
-# --------------------------------------------------------
-
-# Add a reactive calculation to filter the data
-# By decorating the function with @reactive, we can use the function to filter the data
-# The function will be called whenever an input functions used to generate that output changes.
-# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
-
-@reactive.calc
-def filtered_data():
-    return penguins_df
     
 app = App(app_ui, server)
-
